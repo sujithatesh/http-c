@@ -18,7 +18,7 @@ void handleGET(char* file_name, char* message) {
     FILE* file_ptr = fopen(file_name, "r");
     if (file_ptr == NULL) {
         sprintf(message, "HTTP/1.1 404 Not Found\r\n\
-			Content-Type: text/html\r\nContent-Length: 38\r\n\r\n\
+			Content-Type: text/html\r\nContent-Length: 37\r\n\r\n\
 			<html><body><h1>404 Not Found</h1></body></html>");
         return;
     }
@@ -76,6 +76,8 @@ void handleConnection(){
     address.sin_family = AF_INET;
     address.sin_port = htons(8080);
 
+    setsockopt(connection, SOL_SOCKET, SO_REUSEPORT, (char *)&connection, sizeof connection);
+
     int bind_status = bind(connection, (struct sockaddr*)&address, sizeof(address));
     if(bind_status == -1){
 	perror("server bind error. \n");
@@ -98,7 +100,6 @@ void handleConnection(){
 	    perror("Accept error\n");
 	    continue;
 	}
-
 
 	char buff[4096] = {0};
 	recv(client_socket, buff, sizeof(buff), 0);
