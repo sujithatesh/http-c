@@ -1,7 +1,7 @@
 #!/bin/bash
 
-clang server.c -g -o server &&
-clang client.c -g -o client 
+clang server.c -Wall -g -o server &&
+clang client.c -Wall -g -o client 
  
 
 

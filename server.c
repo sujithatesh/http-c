@@ -6,6 +6,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <pthread.h>
+
+#define THREAD_INIT(thread) pthread_t (thread); pthread_create(&(thread), NULL, &handleMessage, (void*)client_socket);
 
 void handleHEAD(char* message) {
     sprintf(message, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n");
@@ -29,26 +32,38 @@ void handleGET(char* file_name, char* message) {
 
     char* file_contents = malloc(file_size + 1);
     fread(file_contents, 1, file_size, file_ptr);
-    file_contents[file_size] = '\0'; // Null-terminate file contents
+    file_contents[file_size] = '\0'; 
     fclose(file_ptr);
-    strcat(message, file_contents); // Append file contents
+    strcat(message, file_contents); 
 
     free(file_contents); 
 }
 
-void handleMessage(char* message, int client_socket) {
+typedef struct{
+    char* message;
+    int client_socket;
+} args;
+
+void* handleMessage(void* temp) {
+    pthread_t self_thread = pthread_self();
+    printf(">> %lu\n", self_thread);
+    sleep(1);;
+
+    args* temp1 = temp;
+    int client_socket = temp1->client_socket;
+    char* message = temp1->message;
     char* dup_message = strdup(message);
     char* token_array[3];
 
     char* token = strtok(dup_message, " ");
-    token_array[0] = token; // Method
+    token_array[0] = token;
     token = strtok(NULL, " ");
-    token_array[1] = token; // Resource
+    token_array[1] = token;
     token = strtok(NULL, " ");
-    token_array[2] = token; // HTTP version
+    token_array[2] = token;
 
     char* file_name = malloc(strlen(token_array[1]) + 1);
-    strcpy(file_name, token_array[1] + 1); // Skip leading '/'
+    strcpy(file_name, token_array[1] + 1);
 
     if (strcmp(token_array[0], "GET") == 0) {
         handleGET(file_name, message);
@@ -62,16 +77,18 @@ void handleMessage(char* message, int client_socket) {
     free(file_name);
     free(dup_message);
     close(client_socket);
+    return NULL;
 }
 
 void handleConnection(){
+    // SETTING UP SOCKET 
     int connection = socket(AF_INET, SOCK_STREAM, 0);
     if(connection == -1){
 	perror("server connection error.\n");
         exit(EXIT_FAILURE);
     }
 
-    struct sockaddr_in address; 
+    struct sockaddr_in address = {};
     address.sin_addr.s_addr = inet_addr("127.0.0.1");
     address.sin_family = AF_INET;
     address.sin_port = htons(8080);
@@ -104,7 +121,20 @@ void handleConnection(){
 	char buff[4096] = {0};
 	recv(client_socket, buff, sizeof(buff), 0);
 
-	handleMessage(buff,client_socket);
+	// THREAD_INIT(thread1);
+	pthread_t thread1, thread2; 
+	args temp = {
+	    .client_socket = client_socket,
+	    .message = buff
+	};
+
+	pthread_create(&(thread1), NULL, handleMessage, (void*)&temp);
+	pthread_create(&(thread2), NULL, handleMessage, (void*)&temp);
+
+	pthread_join(thread1, NULL);
+	pthread_join(thread2, NULL);
+
+	// handleMessage(&temp);
 	close(client_socket);
     }
 
