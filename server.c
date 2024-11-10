@@ -8,8 +8,6 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 
-#define THREAD_INIT(thread) pthread_t (thread); pthread_create(&(thread), NULL, &handleMessage, (void*)client_socket);
-
 void handleHEAD(char* message) {
     sprintf(message, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n");
 }
@@ -121,20 +119,16 @@ void handleConnection(){
 	char buff[4096] = {0};
 	recv(client_socket, buff, sizeof(buff), 0);
 
-	// THREAD_INIT(thread1);
-	pthread_t thread1, thread2; 
+	pthread_t thread1; 
 	args temp = {
 	    .client_socket = client_socket,
 	    .message = buff
 	};
 
 	pthread_create(&(thread1), NULL, handleMessage, (void*)&temp);
-	pthread_create(&(thread2), NULL, handleMessage, (void*)&temp);
 
 	pthread_join(thread1, NULL);
-	pthread_join(thread2, NULL);
 
-	// handleMessage(&temp);
 	close(client_socket);
     }
 
