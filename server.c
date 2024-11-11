@@ -43,9 +43,10 @@ typedef struct{
 } args;
 
 void* handleMessage(void* temp) {
-    pthread_t self_thread = pthread_self();
-    printf(">> %lu\n", self_thread);
-    sleep(1);;
+    #if debug
+	pthread_t self_thread = pthread_self();
+	printf(">> %lu\n", self_thread);
+    #endif /* if debug */
 
     args* temp1 = temp;
     int client_socket = temp1->client_socket;
