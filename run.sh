@@ -1,7 +1,7 @@
 #!/bin/bash
 
 clang server.c -Wall -g -o server &&
-clang client.c -Wall -g -o client 
+clang ./tpool.h -o tpool
  
 
 
